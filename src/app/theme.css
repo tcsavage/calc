@@ -244,16 +244,20 @@ button:disabled {
 }
 
 .rule-slide,
+.rule-disc,
 .rule-cursor {
   cursor: grab;
 }
 
-.rule-slide:focus-visible,
-.rule-cursor:focus-visible {
+/* Keyboard focus shows as a stroke (below); browsers would otherwise outline the bounding box. */
+.rule-slide:focus,
+.rule-disc:focus,
+.rule-cursor:focus {
   outline: none;
 }
 
 .rule-slide:focus-visible > rect,
+.rule-disc:focus-visible > circle,
 .rule-cursor:focus-visible > rect {
   stroke: var(--focus);
   stroke-width: 2;
@@ -312,7 +316,8 @@ button:disabled {
   border: 1px solid var(--border);
 }
 
-.readout tr.readout-slide {
+.readout tr.readout-slide,
+.readout tr.readout-disc {
   background: var(--surface-2);
 }
 
@@ -449,6 +454,17 @@ button:disabled {
 
 .editor-section select {
   width: 100%;
+}
+
+.editor-note {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* Circles and cylinders: as wide as the screen allows, but leaving room for the readout. */
+.viewport-square {
+  height: clamp(240px, min(calc(100vw - 32px), 68vh), 900px);
 }
 
 .editor-save {

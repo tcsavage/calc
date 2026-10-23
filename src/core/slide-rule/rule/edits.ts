@@ -1,39 +1,47 @@
 import { getScale } from "../scales/library";
-import type { Face, RuleDefinition, ScalePlacement, Section } from "./types";
+import {
+  type Face,
+  placementsOf,
+  type RuleDefinition,
+  type ScalePlacement,
+  type Section,
+  sectionsOf,
+} from "./types";
 
 export interface SectionRef {
   face: Face;
   section: Section;
 }
 
-function updateSection(
-  rule: RuleDefinition,
+function updateSection<R extends RuleDefinition>(
+  rule: R,
   { face, section }: SectionRef,
   update: (placements: readonly ScalePlacement[]) => readonly ScalePlacement[],
-): RuleDefinition {
-  const current = rule.faces[face][section];
+): R {
+  if (!sectionsOf(rule.kind).includes(section)) return rule;
+  const current = placementsOf(rule, face, section);
   const next = update(current);
   if (next === current) return rule;
   return { ...rule, faces: { ...rule.faces, [face]: { ...rule.faces[face], [section]: next } } };
 }
 
-export function addScale(rule: RuleDefinition, ref: SectionRef, scale: string): RuleDefinition {
+export function addScale<R extends RuleDefinition>(rule: R, ref: SectionRef, scale: string): R {
   return updateSection(rule, ref, (placements) => [...placements, { scale }]);
 }
 
-export function removeScale(rule: RuleDefinition, ref: SectionRef, index: number): RuleDefinition {
+export function removeScale<R extends RuleDefinition>(rule: R, ref: SectionRef, index: number): R {
   return updateSection(rule, ref, (placements) =>
     index in placements ? placements.filter((_, i) => i !== index) : placements,
   );
 }
 
 /** Moves a scale one place up (-1) or down (1) within its section; a no-op at the ends. */
-export function moveScale(
-  rule: RuleDefinition,
+export function moveScale<R extends RuleDefinition>(
+  rule: R,
   ref: SectionRef,
   index: number,
   direction: -1 | 1,
-): RuleDefinition {
+): R {
   return updateSection(rule, ref, (placements) => {
     const target = index + direction;
     if (!(index in placements) || !(target in placements)) return placements;
@@ -44,7 +52,7 @@ export function moveScale(
 }
 
 /** Switches a scale between its default ink and the other ink. */
-export function toggleInk(rule: RuleDefinition, ref: SectionRef, index: number): RuleDefinition {
+export function toggleInk<R extends RuleDefinition>(rule: R, ref: SectionRef, index: number): R {
   return updateSection(rule, ref, (placements) => {
     const placement = placements[index];
     if (!placement) return placements;

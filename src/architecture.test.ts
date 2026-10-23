@@ -38,6 +38,8 @@ function violations(predicate: (edge: ImportEdge) => boolean): string[] {
   return edges.filter(predicate).map((edge) => `${edge.file} imports ${edge.specifier}`);
 }
 
+/** Code shared by the slide rule instruments; any instrument may import it. */
+const KIT = "slide-rule-kit";
 const instrumentOf = (path: string) => /^instruments\/([^/]+)\//.exec(path)?.[1];
 
 test("core imports only core and zod", () => {
@@ -74,7 +76,16 @@ test("instruments do not import each other", () => {
     violations((edge) => {
       const from = instrumentOf(edge.file);
       const to = edge.target === undefined ? undefined : instrumentOf(edge.target);
-      return from !== undefined && to !== undefined && from !== to;
+      return from !== undefined && to !== undefined && to !== KIT && from !== to;
+    }),
+  ).toEqual([]);
+});
+
+test("the slide rule kit imports no instrument", () => {
+  expect(
+    violations((edge) => {
+      const to = edge.target === undefined ? undefined : instrumentOf(edge.target);
+      return instrumentOf(edge.file) === KIT && to !== undefined && to !== KIT;
     }),
   ).toEqual([]);
 });

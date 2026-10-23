@@ -1,4 +1,4 @@
-import type { FaceDefinition, Palette, RuleDefinition, Skin } from "./types";
+import type { FaceDefinition, LinearRule, Palette, Skin } from "./types";
 
 const scales = (...ids: string[]) => ids.map((scale) => ({ scale }));
 
@@ -15,7 +15,10 @@ const DARK_BASE: Omit<Palette, "body" | "slide"> = {
   glass: "rgba(200, 220, 255, 0.10)",
 };
 
-function skin(light: Pick<Palette, "body" | "slide">, dark: Pick<Palette, "body" | "slide">): Skin {
+export function skin(
+  light: Pick<Palette, "body" | "slide">,
+  dark: Pick<Palette, "body" | "slide">,
+): Skin {
   return {
     light: {
       ...light,
@@ -28,7 +31,7 @@ function skin(light: Pick<Palette, "body" | "slide">, dark: Pick<Palette, "body"
   };
 }
 
-export const PRESETS: readonly RuleDefinition[] = [
+export const PRESETS: readonly LinearRule[] = [
   {
     id: "mannheim",
     name: "Mannheim",
@@ -73,10 +76,10 @@ export const PRESETS: readonly RuleDefinition[] = [
 
 export const DEFAULT_PRESET_ID = "rietz";
 
-export function getPreset(id: string): RuleDefinition | undefined {
+export function getPreset(id: string): LinearRule | undefined {
   return PRESETS.find((preset) => preset.id === id);
 }
 
-export function defaultRule(): RuleDefinition {
-  return getPreset(DEFAULT_PRESET_ID) as RuleDefinition;
+export function defaultRule(): LinearRule {
+  return getPreset(DEFAULT_PRESET_ID) as LinearRule;
 }

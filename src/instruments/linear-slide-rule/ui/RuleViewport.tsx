@@ -6,9 +6,13 @@ import {
   RULE_WIDTH,
   SCALE_LENGTH,
 } from "../../../core/slide-rule/geometry/layout";
-import type { RuleDefinition, RuleState } from "../../../core/slide-rule/rule/types";
-import { type Part, RuleSvg, type ViewBox } from "./RuleSvg";
-import { useElementSize } from "./useElementSize";
+import type { LinearRule, RuleState } from "../../../core/slide-rule/rule/types";
+import {
+  DOCKED_LOUPE_HEIGHT,
+  FLOATING_LOUPE,
+  floatingPosition,
+} from "../../slide-rule-kit/ui/loupe";
+import { useElementSize } from "../../slide-rule-kit/ui/useElementSize";
 import {
   fitView,
   loupeViewBox,
@@ -17,14 +21,11 @@ import {
   type View,
   viewBoxFor,
   zoomAt,
-} from "./viewMath";
-
-const FLOATING_LOUPE = { width: 240, height: 110 };
-const DOCKED_LOUPE_HEIGHT = 120;
-const FINGER_GAP = 28;
+} from "../../slide-rule-kit/ui/viewMath";
+import { type Part, RuleSvg, type ViewBox } from "./RuleSvg";
 
 interface RuleViewportProps {
-  rule: RuleDefinition;
+  rule: LinearRule;
   state: RuleState;
   loupePinned: boolean;
   onMove(part: Part, delta: number): void;
@@ -96,8 +97,12 @@ export function RuleViewport({ rule, state, loupePinned, onMove }: RuleViewportP
   const size = useElementSize(containerRef);
   const layout = useMemo(() => computeFaceLayout(rule.faces[state.face]), [rule, state.face]);
   const [view, setView] = useState<View | null>(null);
-  const current = view ?? fitView(layout.height);
-  const box = viewBoxFor(current, size, layout.height);
+  const content = useMemo(
+    () => ({ x: 0, y: 0, width: RULE_WIDTH, height: layout.height }),
+    [layout.height],
+  );
+  const current = view ?? fitView(content);
+  const box = viewBoxFor(current, size, content);
   const [dragging, setDragging] = useState<{ part: Part; x: number; y: number } | null>(null);
   const [focusY, setFocusY] = useState<number | null>(null);
 
@@ -119,7 +124,7 @@ export function RuleViewport({ rule, state, loupePinned, onMove }: RuleViewportP
   useGesture(
     {
       onPinch: ({ origin: [ox, oy], offset: [scale] }) =>
-        setView(zoomAt(current, scale, toContainer({ x: ox, y: oy }), size, layout.height)),
+        setView(zoomAt(current, scale, toContainer({ x: ox, y: oy }), size, content)),
       onWheel: ({ event, delta: [dx, dy] }) => {
         if (event.ctrlKey) return;
         event.preventDefault();
@@ -145,7 +150,7 @@ export function RuleViewport({ rule, state, loupePinned, onMove }: RuleViewportP
         current.zoom * factor,
         { x: size.width / 2, y: size.height / 2 },
         size,
-        layout.height,
+        content,
       ),
     );
 
@@ -220,16 +225,4 @@ export function RuleViewport({ rule, state, loupePinned, onMove }: RuleViewportP
       </div>
     </div>
   );
-}
-
-/**
- * In window coordinates, above the finger so it is not covered (or below it at the very top of the
- * window), and kept inside the window. Fixed positioning lets it overlap the toolbar on short viewports.
- */
-function floatingPosition(pointer: { x: number; y: number }) {
-  const maxLeft = window.innerWidth - FLOATING_LOUPE.width - 4;
-  const left = Math.min(Math.max(4, pointer.x - FLOATING_LOUPE.width / 2), maxLeft);
-  const above = pointer.y - FLOATING_LOUPE.height - FINGER_GAP;
-  const top = above >= 0 ? above : pointer.y + FINGER_GAP;
-  return { left, top };
 }

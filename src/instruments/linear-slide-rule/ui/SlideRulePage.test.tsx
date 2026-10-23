@@ -1,14 +1,22 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { getPreset } from "../../../core/slide-rule/rule/presets";
+import type { LinearRule } from "../../../core/slide-rule/rule/types";
 import { createKeyValueStore } from "../../../shared/localStorageStore";
-import { storageSessionPort } from "../adapters/sessionPort";
-import { startAutosave } from "../state/persistence";
-import { resolveStartup } from "../state/startup";
-import { createSlideRuleStore, defaultSession, type SlideRuleStore } from "../state/store";
+import { storageSessionPort } from "../../slide-rule-kit/adapters/sessionPort";
+import { startAutosave } from "../../slide-rule-kit/state/persistence";
+import { resolveStartup } from "../../slide-rule-kit/state/startup";
+import {
+  createSlideRuleStore,
+  defaultSession,
+  type SlideRuleStore,
+} from "../../slide-rule-kit/state/store";
+import { LINEAR_CONFIG } from "../config";
 import { SlideRulePage } from "./SlideRulePage";
 
-function renderPage(store: SlideRuleStore = createSlideRuleStore(defaultSession())) {
+const newStore = () => createSlideRuleStore(LINEAR_CONFIG, defaultSession(LINEAR_CONFIG));
+
+function renderPage(store: SlideRuleStore<LinearRule> = newStore()) {
   const view = render(<SlideRulePage store={store} readoutVisible />);
   return { store, ...view };
 }
@@ -89,8 +97,8 @@ test("a rule saved in the editor appears under Saved", async () => {
 
 test("the setting and saved rules survive a reload", () => {
   vi.useFakeTimers();
-  const port = storageSessionPort(createKeyValueStore(localStorage));
-  const first = createSlideRuleStore(resolveStartup(null, port));
+  const port = storageSessionPort(createKeyValueStore(localStorage), LINEAR_CONFIG.storageKeys);
+  const first = createSlideRuleStore(LINEAR_CONFIG, resolveStartup(LINEAR_CONFIG, null, port));
   const autosave = startAutosave(first, port);
   first.getState().setPosition({ slideOffset: 0.25 });
   first.getState().saveAs("Mine");
@@ -98,7 +106,7 @@ test("the setting and saved rules survive a reload", () => {
   autosave.stop();
   vi.useRealTimers();
 
-  renderPage(createSlideRuleStore(resolveStartup(null, port)));
+  renderPage(createSlideRuleStore(LINEAR_CONFIG, resolveStartup(LINEAR_CONFIG, null, port)));
   expect(screen.getByRole("slider", { name: "Slide" })).toHaveAttribute("aria-valuenow", "0.25");
   expect(screen.getByRole("combobox", { name: "Rule" })).toHaveDisplayValue("Mine");
 });

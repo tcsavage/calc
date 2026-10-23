@@ -1,13 +1,6 @@
-import type { GraduationSegment } from "./types";
+import type { Cut, GraduationSegment } from "./types";
 
-export interface Cut {
-  from: number;
-  to: number;
-  /** Step between the longest, labelled ticks. */
-  major: number;
-  /** Overrides the large label step chosen from spacing. */
-  label?: number;
-}
+export type { Cut };
 
 export interface GraduationOptions {
   /** Smallest gap between adjacent ticks, in normalised units. */
@@ -16,7 +9,8 @@ export interface GraduationOptions {
   minSmallLabel?: number;
 }
 
-const DEFAULTS = { minTick: 0.002, minLargeLabel: 0.012, minSmallLabel: 0.02 };
+/** Spacing limits for a scale of the standard length. */
+export const DEFAULT_SPACING = { minTick: 0.002, minLargeLabel: 0.012, minSmallLabel: 0.02 };
 
 /** True when a divided by b is a whole number. Compares a ratio, so it is safe for decimal steps. */
 export function divides(b: number, a: number): boolean {
@@ -68,7 +62,7 @@ export function graduate(
   cuts: readonly Cut[],
   options: GraduationOptions = {},
 ): GraduationSegment[] {
-  const { minTick, minLargeLabel, minSmallLabel } = { ...DEFAULTS, ...options };
+  const { minTick, minLargeLabel, minSmallLabel } = { ...DEFAULT_SPACING, ...options };
   return cuts.map(({ from, to, major, label }) => {
     const candidates = candidateSteps(major);
     const fine = candidates.filter((step) => spacing(toPosition, from, to, step) >= minTick);

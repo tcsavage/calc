@@ -1,5 +1,13 @@
-import { clampState } from "../rule/state";
-import type { RuleDefinition, Session } from "../rule/types";
+import { normaliseState } from "../rule/state";
+import {
+  FACES,
+  type Face,
+  placementsOf,
+  type RuleDefinition,
+  type ScalePlacement,
+  type Session,
+  sectionsOf,
+} from "../rule/types";
 import { getScale, SCALE_ALIASES } from "../scales/library";
 import { type Migrations, migrate } from "./migrate";
 import { savedEnvelope, sessionEnvelope } from "./schema";
@@ -17,27 +25,24 @@ interface CodecOptions {
 }
 
 /** Renames aliased scales and removes scales the library no longer has. */
-export function dropUnknownScales(
-  rule: RuleDefinition,
+export function dropUnknownScales<R extends RuleDefinition>(
+  rule: R,
   aliases: Readonly<Record<string, string>> = SCALE_ALIASES,
-): { rule: RuleDefinition; dropped: string[] } {
+): { rule: R; dropped: string[] } {
   const dropped: string[] = [];
-  const fix = (placements: RuleDefinition["faces"]["front"]["upper"]) =>
+  const fix = (placements: readonly ScalePlacement[]) =>
     placements.flatMap((placement) => {
       const scale = aliases[placement.scale] ?? placement.scale;
       if (getScale(scale)) return [{ ...placement, scale }];
       dropped.push(placement.scale);
       return [];
     });
-  const face = (f: RuleDefinition["faces"]["front"]) => ({
-    upper: fix(f.upper),
-    slide: fix(f.slide),
-    lower: fix(f.lower),
-  });
-  return {
-    rule: { ...rule, faces: { front: face(rule.faces.front), back: face(rule.faces.back) } },
-    dropped,
-  };
+  const face = (f: Face) =>
+    Object.fromEntries(
+      sectionsOf(rule.kind).map((section) => [section, fix(placementsOf(rule, f, section))]),
+    );
+  const faces = Object.fromEntries(FACES.map((f) => [f, face(f)])) as unknown as R["faces"];
+  return { rule: { ...rule, faces }, dropped };
 }
 
 export function encodeSession({ rule, state }: Session): unknown {
@@ -56,7 +61,7 @@ export function decodeSession(raw: unknown, options: CodecOptions = {}): DecodeR
   const { rule, dropped } = dropUnknownScales(parsed.data.rule, options.aliases);
   return {
     ok: true,
-    value: { rule, state: clampState(parsed.data.state) },
+    value: { rule, state: normaliseState(rule.kind, parsed.data.state) },
     droppedScales: dropped,
   };
 }

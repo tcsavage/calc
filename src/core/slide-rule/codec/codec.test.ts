@@ -1,5 +1,12 @@
+import { CIRCULAR_PRESETS } from "../rule/circularPresets";
+import { CYLINDRICAL_PRESETS } from "../rule/cylindricalPresets";
 import { PRESETS } from "../rule/presets";
-import type { RuleDefinition } from "../rule/types";
+import {
+  type CircularRule,
+  type CylindricalRule,
+  type LinearRule,
+  placementsOf,
+} from "../rule/types";
 import { decodeSharePayload, encodeSharePayload } from "./base64url";
 import {
   decodeSavedRules,
@@ -11,11 +18,11 @@ import {
 import { migrate } from "./migrate";
 
 const state = { face: "back" as const, slideOffset: 0.30103, cursor: 0.77815 };
-const withScale = (rule: RuleDefinition, scale: string): RuleDefinition => ({
+const withScale = (rule: LinearRule, scale: string): LinearRule => ({
   ...rule,
   faces: { ...rule.faces, front: { ...rule.faces.front, upper: [{ scale }] } },
 });
-const rietz = PRESETS[1] as RuleDefinition;
+const rietz = PRESETS[1] as LinearRule;
 
 test.each(PRESETS.map((preset) => [preset.name, preset] as const))("%s round trips", (_, rule) => {
   const decoded = decodeSession(JSON.parse(JSON.stringify(encodeSession({ rule, state }))));
@@ -58,7 +65,7 @@ test("old versions are migrated step by step", () => {
 test("unknown scales are dropped and reported; aliases are renamed", () => {
   const decoded = decodeSession(encodeSession({ rule: withScale(rietz, "XX"), state }));
   expect(decoded.ok && decoded.droppedScales).toEqual(["XX"]);
-  expect(decoded.ok && decoded.value.rule.faces.front.upper).toEqual([]);
+  expect(decoded.ok && placementsOf(decoded.value.rule, "front", "upper")).toEqual([]);
   expect(dropUnknownScales(withScale(rietz, "OLD"), { OLD: "K" }).rule.faces.front.upper).toEqual([
     { scale: "K" },
   ]);
@@ -93,4 +100,49 @@ test("share payloads round trip, including names outside ASCII, and stay short",
 test("malformed share payloads are invalid", () => {
   expect(decodeSharePayload("%%%")).toEqual({ ok: false, reason: "invalid" });
   expect(decodeSharePayload("aGVsbG8")).toEqual({ ok: false, reason: "invalid" });
+});
+
+test("a circular session decodes as a circular rule with its positions wrapped", () => {
+  const basic = CIRCULAR_PRESETS[0] as CircularRule;
+  const decoded = decodeSession(
+    encodeSession({
+      rule: basic,
+      state: { face: "front", slideOffset: 1.3, cursor: -0.25, rotateView: false },
+    }),
+  );
+  expect(decoded.ok && decoded.value.rule).toEqual(basic);
+  expect(decoded.ok && decoded.value.state).toEqual({
+    face: "front",
+    slideOffset: expect.closeTo(0.3),
+    cursor: 0.75,
+    rotateView: false,
+  });
+});
+
+test("a circular rule with straight sections is invalid", () => {
+  const mixed = { ...rietz, kind: "circular" };
+  expect(decodeSession({ v: 1, rule: mixed, state })).toEqual({ ok: false, reason: "invalid" });
+});
+
+describe("cylindrical rules", () => {
+  const helix = CYLINDRICAL_PRESETS[1] as CylindricalRule;
+
+  test("round trip with their turns, clamped like a straight rule", () => {
+    const decoded = decodeSession(
+      encodeSession({ rule: helix, state: { face: "front", slideOffset: 3, cursor: 0.5 } }),
+    );
+    expect(decoded.ok && decoded.value.rule).toEqual(helix);
+    expect(decoded.ok && decoded.value.state.slideOffset).toBe(1);
+  });
+
+  test("always show their front, the only face a cylinder has", () => {
+    const decoded = decodeSession(encodeSession({ rule: helix, state }));
+    expect(decoded.ok && decoded.value.state.face).toBe("front");
+  });
+
+  test("turns must be a whole number from 2 to 40", () => {
+    for (const turns of [1, 41, 2.5]) {
+      expect(decodeSession({ v: 1, rule: { ...helix, turns }, state }).ok).toBe(false);
+    }
+  });
 });

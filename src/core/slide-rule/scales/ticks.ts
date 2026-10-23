@@ -1,9 +1,9 @@
 import { formatLabel } from "./format";
-import { divides } from "./graduation";
+import { DEFAULT_SPACING, divides, graduate } from "./graduation";
 import type { GraduationSegment, ScaleSpec, Tick } from "./types";
 
 const EPSILON = 1e-9;
-const cache = new WeakMap<ScaleSpec, readonly Tick[]>();
+const cache = new WeakMap<ScaleSpec, Map<number, readonly Tick[]>>();
 
 /** Relative tick length by level: the major step is longest and the finest step shortest. */
 function tickSize(level: number, levels: number): number {
@@ -56,12 +56,32 @@ function mergeCoincident(ticks: Tick[]): Tick[] {
   return merged;
 }
 
-/** All ticks of a scale in position order, memoised per scale. */
-export function generateTicks(spec: ScaleSpec): readonly Tick[] {
-  const cached = cache.get(spec);
+/** Graduation for a scale drawn lengthFactor times the standard length, with the same physical spacing. */
+function segmentsFor(spec: ScaleSpec, lengthFactor: number): readonly GraduationSegment[] {
+  if (lengthFactor === 1) return spec.segments;
+  return graduate(spec.toPosition, spec.cuts, {
+    minTick: DEFAULT_SPACING.minTick / lengthFactor,
+    minLargeLabel: DEFAULT_SPACING.minLargeLabel / lengthFactor,
+    minSmallLabel: DEFAULT_SPACING.minSmallLabel / lengthFactor,
+  });
+}
+
+/**
+ * All ticks of a scale in position order. lengthFactor is the drawn length relative to the standard
+ * scale length (a short inner ring of a circular rule is below 1). Memoised per scale and factor,
+ * rounded to hundredths.
+ */
+export function generateTicks(spec: ScaleSpec, lengthFactor = 1): readonly Tick[] {
+  const factor = Math.round(lengthFactor * 100) / 100;
+  let byFactor = cache.get(spec);
+  if (!byFactor) {
+    byFactor = new Map();
+    cache.set(spec, byFactor);
+  }
+  const cached = byFactor.get(factor);
   if (cached) return cached;
   const ticks = mergeCoincident(
-    spec.segments
+    segmentsFor(spec, factor)
       .flatMap((segment) => segmentTicks(spec, segment))
       .sort((a, b) => a.position - b.position),
   );
@@ -72,6 +92,6 @@ export function generateTicks(spec: ScaleSpec): readonly Tick[] {
     label: { text: label, size: "mark" },
   }));
   const result = [...ticks, ...marks].sort((a, b) => a.position - b.position);
-  cache.set(spec, result);
+  byFactor.set(factor, result);
   return result;
 }

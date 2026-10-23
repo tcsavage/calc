@@ -9,6 +9,16 @@ export interface GraduationSegment {
   smallLabelStep?: number;
 }
 
+/** An interval of a scale's values with the step between its longest, labelled ticks. */
+export interface Cut {
+  from: number;
+  to: number;
+  /** Step between the longest, labelled ticks. */
+  major: number;
+  /** Overrides the large label step chosen from spacing. */
+  label?: number;
+}
+
 export interface ScaleMark {
   value: number;
   label: string;
@@ -30,6 +40,9 @@ export interface ScaleSpec {
   displayValue?(value: number): number;
   /** Maps a value to its printed label when that differs from the read value, for example K's repeated 1 to 10. */
   labelValue?(value: number): number;
+  /** The cut points the segments were graduated from, kept to re-graduate for other lengths. */
+  cuts: readonly Cut[];
+  /** Graduation for a straight scale of the standard length. */
   segments: readonly GraduationSegment[];
   marks?: readonly ScaleMark[];
 }

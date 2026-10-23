@@ -1,16 +1,18 @@
 import { useMemo } from "react";
 import { useStore } from "zustand";
 import { computeReadout } from "../../../core/slide-rule/readout";
-import type { SlideRuleStore } from "../state/store";
-import { Notices } from "./Notices";
-import { Readout } from "./Readout";
-import { RulePicker } from "./RulePicker";
+import type { LinearRule } from "../../../core/slide-rule/rule/types";
+import type { SlideRuleStore } from "../../slide-rule-kit/state/store";
+import { Notices } from "../../slide-rule-kit/ui/Notices";
+import { Readout } from "../../slide-rule-kit/ui/Readout";
+import { ScaleEditorDrawer } from "../../slide-rule-kit/ui/ScaleEditorDrawer";
+import { SlideRuleToolbar } from "../../slide-rule-kit/ui/SlideRuleToolbar";
+import { skinStyle } from "../../slide-rule-kit/ui/skinStyle";
+import { LINEAR_CONFIG, SECTION_NAMES } from "../config";
 import { RuleViewport } from "./RuleViewport";
-import { ScaleEditorDrawer } from "./ScaleEditorDrawer";
-import { skinStyle } from "./skinStyle";
 
 interface SlideRulePageProps {
-  store: SlideRuleStore;
+  store: SlideRuleStore<LinearRule>;
   readoutVisible: boolean;
   onToggleReadout?(): void;
   onShare?(): void;
@@ -24,54 +26,27 @@ export function SlideRulePage({
 }: SlideRulePageProps) {
   const rule = useStore(store, (s) => s.rule);
   const state = useStore(store, (s) => s.state);
-  const savedRules = useStore(store, (s) => s.savedRules);
   const notices = useStore(store, (s) => s.notices);
   const loupePinned = useStore(store, (s) => s.loupePinned);
   const editorOpen = useStore(store, (s) => s.editorOpen);
   const actions = store.getState();
-  const readout = useMemo(() => computeReadout(rule.faces[state.face], state), [rule, state]);
+  const readout = useMemo(() => computeReadout(rule, state), [rule, state]);
   const onMove = (part: "slide" | "cursor", delta: number) =>
     part === "slide" ? actions.moveSlideBy(delta) : actions.moveCursorBy(delta);
 
   return (
     <div className="slide-rule-page rule-skin" style={skinStyle(rule.skin)}>
       <Notices notices={notices} onDismiss={actions.dismissNotice} />
-      <div className="toolbar" role="toolbar" aria-label="Slide rule controls">
-        <RulePicker rule={rule} savedRules={savedRules} onSelect={actions.selectRule} />
-        <button
-          type="button"
-          onClick={actions.flip}
-          aria-label={`Flip to ${state.face === "front" ? "back" : "front"}`}
-        >
-          {state.face === "front" ? "Front" : "Back"} ⇄
-        </button>
-        <button type="button" onClick={actions.resetPosition}>
-          Reset
-        </button>
-        {onToggleReadout && (
-          <button type="button" aria-pressed={readoutVisible} onClick={onToggleReadout}>
-            Readout
-          </button>
-        )}
-        <button type="button" aria-pressed={loupePinned} onClick={actions.toggleLoupePinned}>
-          Pin loupe
-        </button>
-        <button
-          type="button"
-          aria-pressed={editorOpen}
-          onClick={() => actions.setEditorOpen(!editorOpen)}
-        >
-          Edit
-        </button>
-        {onShare && (
-          <button type="button" onClick={onShare}>
-            Share
-          </button>
-        )}
-      </div>
+      <SlideRuleToolbar
+        store={store}
+        presets={LINEAR_CONFIG.presets}
+        readoutVisible={readoutVisible}
+        onToggleReadout={onToggleReadout}
+        onShare={onShare}
+      />
       <RuleViewport rule={rule} state={state} loupePinned={loupePinned} onMove={onMove} />
-      {readoutVisible && <Readout entries={readout} />}
-      {editorOpen && <ScaleEditorDrawer store={store} />}
+      {readoutVisible && <Readout entries={readout} sectionNames={SECTION_NAMES} />}
+      {editorOpen && <ScaleEditorDrawer store={store} sectionNames={SECTION_NAMES} />}
     </div>
   );
 }

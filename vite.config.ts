@@ -8,7 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["icon.svg", "icon-192.png", "icon-512.png"],
+      includeAssets: [
+        "icon.svg",
+        "icon-192.png",
+        "icon-512.png",
+        "circular-slide-rule.svg",
+        "cylindrical-slide-rule.svg",
+      ],
       manifest: {
         name: "Calc: mechanical calculators",
         short_name: "Calc",

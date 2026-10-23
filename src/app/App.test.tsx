@@ -18,6 +18,22 @@ test("the home page links to the slide rule, which opens on the default rule", a
   expect(await screen.findByRole("group", { name: /Rietz slide rule/ })).toBeInTheDocument();
 });
 
+test("the home page links to the circular slide rule, which opens on Basic", async () => {
+  render(<App />);
+  await userEvent.click(screen.getByRole("link", { name: /Circular slide rule/ }));
+  expect(
+    await screen.findByRole("group", { name: "Basic circular slide rule, front face" }),
+  ).toBeInTheDocument();
+});
+
+test("the home page links to the cylindrical slide rule, which opens on Short helix", async () => {
+  render(<App />);
+  await userEvent.click(screen.getByRole("link", { name: /Cylindrical slide rule/ }));
+  expect(
+    await screen.findByRole("group", { name: "Short helix cylindrical slide rule" }),
+  ).toBeInTheDocument();
+});
+
 test("an unknown instrument shows not found", () => {
   window.location.hash = "#/abacus";
   render(<App />);

@@ -20,7 +20,7 @@ interface Definition {
 }
 
 function define({ cuts, ink = "black", ...rest }: Definition): ScaleSpec {
-  return { ...rest, name: rest.id, ink, segments: graduate(rest.toPosition, cuts) };
+  return { ...rest, name: rest.id, ink, cuts, segments: graduate(rest.toPosition, cuts) };
 }
 
 const PI_MARK: ScaleMark[] = [{ value: PI, label: "π" }];

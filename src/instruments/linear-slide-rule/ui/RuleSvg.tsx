@@ -5,25 +5,20 @@ import {
   RULE_WIDTH,
   SCALE_LENGTH,
 } from "../../../core/slide-rule/geometry/layout";
-import type { RuleDefinition, RuleState } from "../../../core/slide-rule/rule/types";
+import type { LinearRule, RuleState } from "../../../core/slide-rule/rule/types";
+import { keyDelta } from "../../slide-rule-kit/ui/keys";
+import type { Box } from "../../slide-rule-kit/ui/viewMath";
 import { ScaleBand } from "./ScaleBand";
 
-export const KEY_STEP = 0.002;
-export const FINE_KEY_STEP = 0.0002;
 const CURSOR_WIDTH = 44;
 const CURSOR_OVERHANG = 6;
 
-export interface ViewBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+export type ViewBox = Box;
 
 export type Part = "slide" | "cursor";
 
 interface RuleSvgProps {
-  rule: RuleDefinition;
+  rule: LinearRule;
   state: RuleState;
   viewBox: ViewBox;
   svgRef?: Ref<SVGSVGElement>;
@@ -31,13 +26,6 @@ interface RuleSvgProps {
   accessible?: boolean;
   onKeyMove?(part: Part, delta: number): void;
   className?: string;
-}
-
-function keyDelta(event: KeyboardEvent): number | undefined {
-  const step = event.shiftKey ? FINE_KEY_STEP : KEY_STEP;
-  if (event.key === "ArrowRight" || event.key === "ArrowUp") return step;
-  if (event.key === "ArrowLeft" || event.key === "ArrowDown") return -step;
-  return undefined;
 }
 
 export function RuleSvg({
