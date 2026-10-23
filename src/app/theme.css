@@ -1,0 +1,481 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f2ec;
+  --surface: #ffffff;
+  --surface-2: #eceae2;
+  --text: #1f2328;
+  --muted: #5e636b;
+  --border: #d4d0c4;
+  --accent: #b3261e;
+  --focus: #1a73e8;
+  --rule-font: "Helvetica Neue", Arial, sans-serif;
+  --rule-edge: rgba(0, 0, 0, 0.35);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #15171a;
+  --surface: #1e2125;
+  --surface-2: #262a2f;
+  --text: #e6e3da;
+  --muted: #a3a7ad;
+  --border: #3a3f46;
+  --accent: #ff7b6b;
+  --focus: #8ab4f8;
+  --rule-edge: rgba(255, 255, 255, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #15171a;
+    --surface: #1e2125;
+    --surface-2: #262a2f;
+    --text: #e6e3da;
+    --muted: #a3a7ad;
+    --border: #3a3f46;
+    --accent: #ff7b6b;
+    --focus: #8ab4f8;
+    --rule-edge: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Each rule carries a light and a dark palette; pick one from the theme. */
+.rule-skin {
+  --rule-body: var(--skin-light-body);
+  --rule-slide: var(--skin-light-slide);
+  --rule-ink: var(--skin-light-ink);
+  --rule-red: var(--skin-light-redInk);
+  --rule-hairline: var(--skin-light-hairline);
+  --rule-glass: var(--skin-light-glass);
+}
+
+:root[data-theme="dark"] .rule-skin {
+  --rule-body: var(--skin-dark-body);
+  --rule-slide: var(--skin-dark-slide);
+  --rule-ink: var(--skin-dark-ink);
+  --rule-red: var(--skin-dark-redInk);
+  --rule-hairline: var(--skin-dark-hairline);
+  --rule-glass: var(--skin-dark-glass);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .rule-skin {
+    --rule-body: var(--skin-dark-body);
+    --rule-slide: var(--skin-dark-slide);
+    --rule-ink: var(--skin-dark-ink);
+    --rule-red: var(--skin-dark-redInk);
+    --rule-hairline: var(--skin-dark-hairline);
+    --rule-glass: var(--skin-dark-glass);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  overscroll-behavior: none;
+}
+
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  min-height: 36px;
+}
+
+button {
+  cursor: pointer;
+}
+
+button[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 max(16px, env(safe-area-inset-left)) env(safe-area-inset-bottom);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: 0.02em;
+}
+
+.app-header h1 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.home {
+  max-width: 720px;
+}
+
+.home-intro {
+  color: var(--muted);
+}
+
+.instrument-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.instrument-card {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.instrument-card strong {
+  display: block;
+}
+
+.instrument-card span span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.instrument {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide-rule-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.toolbar select {
+  max-width: 14rem;
+}
+
+.viewport {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.viewport-main {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.rule-svg,
+.loupe svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rule-slide,
+.rule-cursor {
+  cursor: grab;
+}
+
+.rule-slide:focus-visible,
+.rule-cursor:focus-visible {
+  outline: none;
+}
+
+.rule-slide:focus-visible > rect,
+.rule-cursor:focus-visible > rect {
+  stroke: var(--focus);
+  stroke-width: 2;
+}
+
+.zoom-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.zoom-controls button {
+  min-width: 36px;
+  opacity: 0.9;
+}
+
+.loupe {
+  background: var(--surface-2);
+  border: 2px solid var(--text);
+  overflow: hidden;
+}
+
+.loupe-floating {
+  position: fixed;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.loupe-docked {
+  border-radius: 8px;
+  flex: none;
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.readout tbody {
+  display: contents;
+}
+
+.readout tr {
+  display: flex;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.readout tr.readout-slide {
+  background: var(--surface-2);
+}
+
+.readout th {
+  font-weight: 600;
+  min-width: 2.2em;
+  text-align: left;
+}
+
+.readout td.out-of-range {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.notices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.notices li,
+.update-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+}
+
+.update-prompt {
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
+.editor {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(380px, 100%);
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .editor {
+    top: auto;
+    left: 0;
+    width: 100%;
+    max-height: 70vh;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    border-radius: 14px 14px 0 0;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor-header h2,
+.editor-section h3 {
+  margin: 0;
+}
+
+.editor-header h2 {
+  font-size: 1.1rem;
+}
+
+.editor-section h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.editor-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.editor-section ol {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.editor-section li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scale-chip {
+  font-weight: 700;
+  min-width: 3em;
+}
+
+.scale-chip.ink-red {
+  color: var(--accent);
+}
+
+.scale-formula {
+  color: var(--muted);
+  flex: 1;
+}
+
+.row-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.row-actions button {
+  min-width: 34px;
+  padding: 4px 6px;
+}
+
+.editor-section select {
+  width: 100%;
+}
+
+.editor-save {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: end;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.editor-save label {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 100%;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.error-panel,
+.not-found,
+.loading {
+  padding: 16px 0;
+}
+
+fieldset.editor-tabs {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
